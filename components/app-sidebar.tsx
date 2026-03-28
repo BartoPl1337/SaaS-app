@@ -1,6 +1,6 @@
 "use client"
 
-import * as React from "react"
+import { useState } from "react"
 import {
   LayoutDashboard,
   Kanban,
@@ -11,6 +11,7 @@ import {
   Bell,
   ChevronUp,
   Plus,
+  AlarmClockCheck,
 } from "lucide-react"
 
 import {
@@ -30,51 +31,53 @@ import {
 import { Button } from "@/components/ui/button"
 import { NewProjectDialog } from "@/components/new-project-dialog"
 import { NotificationsPopover } from "@/components/notifications-popover"
+import Link from "next/link"
+import { cn } from "@/lib/utils"
+import { usePathname } from "next/navigation"
 
 const navItems = [
   {
-    label: "Dashboard",
+    label: "Panel główny",
     icon: LayoutDashboard,
-    href: "#dashboard",
-    active: true,
+    href: "/",
   },
   {
-    label: "Boards",
+    label: "Tablica",
     icon: Kanban,
-    href: "#boards",
+    href: "/boards",
     badge: null,
   },
   {
-    label: "My Tasks",
+    label: "Moje zadania",
     icon: CheckSquare,
-    href: "#my-tasks",
+    href: "/tasks",
     badge: "5",
   },
   {
-    label: "Activity",
+    label: "Aktywność",
     icon: Activity,
-    href: "#activity",
+    href: "/activity",
     badge: null,
   },
   {
-    label: "Members",
+    label: "Członkowie",
     icon: Users,
-    href: "#members",
+    href: "/members",
     badge: null,
   },
 ]
 
 const bottomItems = [
   {
-    label: "Settings",
+    label: "Ustawienia",
     icon: Settings,
-    href: "#settings",
+    href: "/settings",
   },
 ]
 
 export function AppSidebar() {
-  const [activeItem, setActiveItem] = React.useState("Dashboard")
-  const [newProjectOpen, setNewProjectOpen] = React.useState(false)
+  const [newProjectOpen, setNewProjectOpen] = useState<boolean>(false)
+  const pathname = usePathname()
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
 
@@ -84,25 +87,15 @@ export function AppSidebar() {
         {/* Header */}
         <SidebarHeader className="px-3 py-4">
           <div className="flex items-center gap-3 px-1">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground shadow-sm">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                className="size-4"
-                strokeWidth={2.5}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
-                />
-              </svg>
-            </div>
+            <Link href="/">
+              <div className={cn("flex size-8 items-center justify-center text-sidebar-primary-foreground", isCollapsed ? "p-1" : "p-2 rounded-md bg-black")}>
+                <AlarmClockCheck className={cn(isCollapsed ? "size-4 text-black" : "size-5")} />
+              </div>
+            </Link>
             {!isCollapsed && (
               <div className="flex flex-col leading-tight">
                 <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">
-                  ProjectHub
+                  TaskHub
                 </span>
                 <span className="text-[10px] font-medium text-sidebar-foreground/40 uppercase tracking-widest">
                   Workspace
@@ -122,19 +115,20 @@ export function AppSidebar() {
                 {navItems.map((item) => (
                   <SidebarMenuItem key={item.label}>
                     <SidebarMenuButton
-                      isActive={activeItem === item.label}
-                      onClick={() => setActiveItem(item.label)}
                       tooltip={item.label}
                       size="default"
                       className="relative h-9 rounded-lg transition-all duration-150"
+                      asChild
                     >
-                      <item.icon className="shrink-0" />
-                      <span>{item.label}</span>
-                      {item.badge && !isCollapsed && (
-                        <SidebarMenuBadge className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-sidebar-primary/10 px-1.5 text-[10px] font-semibold text-sidebar-primary">
-                          {item.badge}
-                        </SidebarMenuBadge>
-                      )}
+                      <Link href={item.href}>
+                        <item.icon />
+                        <span>{item.label}</span>
+                        {item.badge && !isCollapsed && (
+                          <SidebarMenuBadge className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-sidebar-primary/10 px-1.5 text-[10px] font-semibold text-sidebar-primary">
+                            {item.badge}
+                          </SidebarMenuBadge>
+                        )}
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -161,8 +155,6 @@ export function AppSidebar() {
                 {bottomItems.map((item) => (
                   <SidebarMenuItem key={item.label}>
                     <SidebarMenuButton
-                      isActive={activeItem === item.label}
-                      onClick={() => setActiveItem(item.label)}
                       tooltip={item.label}
                       size="default"
                       className="h-9 rounded-lg transition-all duration-150"
