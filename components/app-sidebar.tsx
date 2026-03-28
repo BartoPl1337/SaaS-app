@@ -12,6 +12,7 @@ import {
   ChevronUp,
   Plus,
   AlarmClockCheck,
+  LogOutIcon,
 } from "lucide-react"
 
 import {
@@ -34,6 +35,8 @@ import { NotificationsPopover } from "@/components/notifications-popover"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { usePathname } from "next/navigation"
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
 
 const navItems = [
   {
@@ -67,14 +70,6 @@ const navItems = [
   },
 ]
 
-const bottomItems = [
-  {
-    label: "Ustawienia",
-    icon: Settings,
-    href: "/settings",
-  },
-]
-
 export function AppSidebar() {
   const [newProjectOpen, setNewProjectOpen] = useState<boolean>(false)
   const pathname = usePathname()
@@ -87,10 +82,8 @@ export function AppSidebar() {
         {/* Header */}
         <SidebarHeader className="px-3 py-4">
           <div className="flex items-center gap-3 px-1">
-            <Link href="/">
-              <div className={cn("flex size-8 items-center justify-center text-sidebar-primary-foreground", isCollapsed ? "p-1" : "p-2 rounded-md bg-black")}>
-                <AlarmClockCheck className={cn(isCollapsed ? "size-4 text-black" : "size-5")} />
-              </div>
+            <Link href="/" className={cn("flex size-8 items-center justify-center text-sidebar-primary-foreground", isCollapsed ? "p-1" : "p-2 rounded-md bg-black")}>
+              <AlarmClockCheck className={cn(isCollapsed ? "size-4 text-black" : "size-5")} />
             </Link>
             {!isCollapsed && (
               <div className="flex flex-col leading-tight">
@@ -117,7 +110,7 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       tooltip={item.label}
                       size="default"
-                      className="relative h-9 rounded-lg transition-all duration-150"
+                      className={cn("relative h-9 rounded-lg transition-all duration-150", pathname === item.href ? "bg-primary/20" : "")}
                       asChild
                     >
                       <Link href={item.href}>
@@ -138,34 +131,16 @@ export function AppSidebar() {
 
           {/* Bottom nav group */}
           <SidebarGroup className="mt-auto">
-            <div className="px-1 pb-2 group-data-[collapsible=icon]:hidden">
+            <div className="group-data-[collapsible=icon]:hidden">
               <Button
                 variant="outline"
-                size="sm"
-                className="h-8 w-full gap-1.5 border-dashed text-xs font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                className="w-full gap-1.5 border-dashed text-xs font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground cursor-pointer"
                 onClick={() => setNewProjectOpen(true)}
               >
-                <Plus className="size-3.5 shrink-0" />
+                <Plus className="size-3.5" />
                 Nowy projekt
               </Button>
             </div>
-            <SidebarSeparator className="mb-2" />
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {bottomItems.map((item) => (
-                  <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton
-                      tooltip={item.label}
-                      size="default"
-                      className="h-9 rounded-lg transition-all duration-150"
-                    >
-                      <item.icon className="shrink-0" />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
 
@@ -176,30 +151,45 @@ export function AppSidebar() {
             className={`flex items-center gap-2 ${isCollapsed ? "flex-col" : "flex-row"}`}
           >
             {/* Profile button */}
-            <Button
-              variant="ghost"
-              className={`group relative h-9 flex-1 items-center gap-2.5 rounded-lg px-2 text-left transition-all duration-150 hover:bg-sidebar-accent ${isCollapsed ? "w-full justify-center px-0" : "justify-start"}`}
-            >
-              <div className="relative shrink-0">
-                <div className="flex size-7 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-[11px] font-bold text-white shadow-sm">
-                  BB
-                </div>
-                <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-sidebar bg-emerald-500" />
-              </div>
-              {!isCollapsed && (
-                <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate text-xs font-semibold text-sidebar-foreground">
-                    Bartosz B.
-                  </span>
-                  <span className="truncate text-[10px] text-sidebar-foreground/50">
-                    Admin
-                  </span>
-                </div>
-              )}
-              {!isCollapsed && (
-                <ChevronUp className="ml-auto size-3.5 shrink-0 text-sidebar-foreground/40 transition-transform group-hover:text-sidebar-foreground" />
-              )}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`group relative h-9 flex-1 items-center gap-2.5 rounded-lg px-2 text-left transition-all duration-150 hover:bg-sidebar-accent ${isCollapsed ? "w-full justify-center px-0" : "justify-start"}`}
+                >
+                  <Avatar>
+                    <AvatarImage src="https://github.com/shadcn.png" />
+                    <AvatarFallback>CN</AvatarFallback>
+                  </Avatar>
+                  {!isCollapsed && (
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-xs font-semibold text-sidebar-foreground">
+                        Bartosz B.
+                      </span>
+                      <span className="truncate text-[10px] text-sidebar-foreground/50">
+                        Admin
+                      </span>
+                    </div>
+                  )}
+                  {!isCollapsed && (
+                    <ChevronUp className="ml-auto size-3.5 shrink-0 text-sidebar-foreground/40 transition-transform group-hover:text-sidebar-foreground" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Ustawienia</DropdownMenuLabel>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <LogOutIcon />
+                    Wyloguj się
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Notification button */}
             <NotificationsPopover side="left" align="end">
