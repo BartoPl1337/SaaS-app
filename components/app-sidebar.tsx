@@ -179,11 +179,15 @@ export function AppSidebar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuGroup>
-                  <DropdownMenuLabel>Ustawienia</DropdownMenuLabel>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings">
+                      <Settings /> Ustawienia
+                    </Link>
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem variant="destructive">
                     <LogOutIcon />
                     Wyloguj się
                   </DropdownMenuItem>
