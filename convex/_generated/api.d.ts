@@ -61,6 +61,7 @@ export declare const components: {
                   emailVerified: boolean;
                   image?: null | string;
                   name: string;
+                  surname: string;
                   updatedAt: number;
                   userId?: null | string;
                 };
@@ -133,6 +134,7 @@ export declare const components: {
                     | "email"
                     | "emailVerified"
                     | "image"
+                    | "surname"
                     | "createdAt"
                     | "updatedAt"
                     | "userId"
@@ -320,6 +322,7 @@ export declare const components: {
                     | "email"
                     | "emailVerified"
                     | "image"
+                    | "surname"
                     | "createdAt"
                     | "updatedAt"
                     | "userId"
@@ -575,6 +578,7 @@ export declare const components: {
                   emailVerified?: boolean;
                   image?: null | string;
                   name?: string;
+                  surname?: string;
                   updatedAt?: number;
                   userId?: null | string;
                 };
@@ -585,6 +589,7 @@ export declare const components: {
                     | "email"
                     | "emailVerified"
                     | "image"
+                    | "surname"
                     | "createdAt"
                     | "updatedAt"
                     | "userId"
@@ -807,6 +812,7 @@ export declare const components: {
                   emailVerified?: boolean;
                   image?: null | string;
                   name?: string;
+                  surname?: string;
                   updatedAt?: number;
                   userId?: null | string;
                 };
@@ -817,6 +823,7 @@ export declare const components: {
                     | "email"
                     | "emailVerified"
                     | "image"
+                    | "surname"
                     | "createdAt"
                     | "updatedAt"
                     | "userId"

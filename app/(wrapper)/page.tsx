@@ -230,19 +230,19 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
+    <div className="flex flex-col gap-8 p-6">
 
       {/* ── 1. Welcome ─────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Witaj ponownie, Bartosz 👋
+            Witaj ponownie, Bartosz
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Oto co dziś się dzieje w Twoim workspace.
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="h-8 gap-1.5">
             <LayoutGrid className="size-3.5" />
             Utwórz tablicę
@@ -255,7 +255,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── 2+3. Main grid ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-4 gap-5">
+      <div className="grid grid-cols-4 gap-8">
 
         {/* Boards — col 1–3 */}
         <div className="col-span-3">

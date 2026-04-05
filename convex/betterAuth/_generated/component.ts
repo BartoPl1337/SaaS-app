@@ -36,6 +36,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   emailVerified: boolean;
                   image?: null | string;
                   name: string;
+                  surname: string;
                   updatedAt: number;
                   userId?: null | string;
                 };
@@ -109,6 +110,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "email"
                     | "emailVerified"
                     | "image"
+                    | "surname"
                     | "createdAt"
                     | "updatedAt"
                     | "userId"
@@ -297,6 +299,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "email"
                     | "emailVerified"
                     | "image"
+                    | "surname"
                     | "createdAt"
                     | "updatedAt"
                     | "userId"
@@ -555,6 +558,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   emailVerified?: boolean;
                   image?: null | string;
                   name?: string;
+                  surname?: string;
                   updatedAt?: number;
                   userId?: null | string;
                 };
@@ -565,6 +569,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "email"
                     | "emailVerified"
                     | "image"
+                    | "surname"
                     | "createdAt"
                     | "updatedAt"
                     | "userId"
@@ -788,6 +793,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                   emailVerified?: boolean;
                   image?: null | string;
                   name?: string;
+                  surname?: string;
                   updatedAt?: number;
                   userId?: null | string;
                 };
@@ -798,6 +804,7 @@ export type ComponentApi<Name extends string | undefined = string | undefined> =
                     | "email"
                     | "emailVerified"
                     | "image"
+                    | "surname"
                     | "createdAt"
                     | "updatedAt"
                     | "userId"
