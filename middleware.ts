@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 const caseInsensitiveRoutes: Record<string, string> = {
   "/signup": "/signUp",
+  "/login" : "/signIn",
+  "/signin" : "/signIn",
 };
 
 export function middleware(request: NextRequest) {

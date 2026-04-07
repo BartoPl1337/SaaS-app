@@ -26,6 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TaskDetailDialog, type TaskDetail } from "@/components/task-detail-dialog"
+import { authClient } from "@/lib/auth-client"
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -231,7 +232,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8 p-6">
-
       {/* ── 1. Welcome ─────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
