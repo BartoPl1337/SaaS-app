@@ -1,5 +1,4 @@
 "use client"
-import { SignOutButton } from '@/components/sign-out-button';
 import { authClient } from '@/lib/auth-client';
 
 export default function Page() {
@@ -13,7 +12,6 @@ export default function Page() {
             ) : (
                 <p className="text-sm">{JSON.stringify(session)}</p>
             )}
-            <SignOutButton />
         </div>
     )
 }

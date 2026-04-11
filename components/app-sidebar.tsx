@@ -34,9 +34,12 @@ import { NewProjectDialog } from "@/components/new-project-dialog"
 import { NotificationsPopover } from "@/components/notifications-popover"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import { authClient } from "@/lib/auth-client"
+import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog"
+import ProjectInformations from "./new-project-dialog/project-informations"
 
 const navItems = [
   {
@@ -75,6 +78,17 @@ export function AppSidebar() {
   const pathname = usePathname()
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
+  const router = useRouter()
+  const handleSignOut = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/signIn")
+          router.refresh()
+        },
+      },
+    })
+  }
 
   return (
     <>
@@ -131,6 +145,7 @@ export function AppSidebar() {
 
           {/* Bottom nav group */}
           <SidebarGroup className="mt-auto">
+            <ProjectInformations />
             <div className="group-data-[collapsible=icon]:hidden">
               <Button
                 variant="outline"
@@ -187,7 +202,7 @@ export function AppSidebar() {
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem variant="destructive">
+                  <DropdownMenuItem variant="destructive" onClick={handleSignOut}>
                     <LogOutIcon />
                     Wyloguj się
                   </DropdownMenuItem>

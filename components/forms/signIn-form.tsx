@@ -110,9 +110,10 @@ const SignInForm = () => {
                                             onBlur={field.handleBlur}
                                             onChange={(e) => field.handleChange(e.target.value)}
                                             aria-invalid={isInvalid}
-                                            placeholder="Kowalski"
+                                            placeholder="********"
                                             autoComplete="off"
                                             className="h-12"
+                                            type="password"
                                         />
                                         {isInvalid && (
                                             <FieldError errors={field.state.meta.errors} />
