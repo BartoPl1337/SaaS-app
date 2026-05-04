@@ -2,6 +2,8 @@ import { v } from "convex/values";
 import { mutation, query, QueryCtx, MutationCtx } from "./_generated/server";
 import { authComponent } from "./betterAuth/auth";
 import { components } from "./_generated/api";
+import { logActivity } from "./activity";
+import { notifyUser } from "./notifications";
 import type { Id } from "./_generated/dataModel";
 
 const STATUS = v.union(
@@ -62,7 +64,7 @@ export const create = mutation({
 
     const order = last ? last.order + 1 : 0;
 
-    return ctx.db.insert("tasks", {
+    const taskId = await ctx.db.insert("tasks", {
       boardId: args.boardId,
       title: args.title,
       description: args.description,
@@ -74,6 +76,29 @@ export const create = mutation({
       order,
       updatedAt: Date.now(),
     });
+
+    await logActivity(ctx, {
+      workspaceId: board.workspaceId,
+      userId: user._id,
+      type: "TASK_CREATED",
+      entityId: taskId,
+      entityType: "task",
+      metadata: { taskTitle: args.title, boardName: board.name },
+    });
+
+    if (args.assigneeId) {
+      await notifyUser(ctx, {
+        userId: args.assigneeId,
+        actorId: user._id,
+        workspaceId: board.workspaceId,
+        type: "TASK_ASSIGNED",
+        entityId: taskId,
+        entityType: "task",
+        metadata: { taskTitle: args.title, boardName: board.name },
+      });
+    }
+
+    return taskId;
   },
 });
 
@@ -108,6 +133,81 @@ export const update = mutation({
     if (args.dueDate !== undefined)     patch.dueDate = args.dueDate ?? undefined;
 
     await ctx.db.patch(args.id, patch);
+
+    const newTitle = args.title ?? task.title;
+    const baseMeta = { taskTitle: newTitle, boardName: board.name };
+
+    const statusChanged = args.status !== undefined && args.status !== task.status;
+    const assigneeChanged =
+      args.assigneeId !== undefined && (args.assigneeId ?? undefined) !== task.assigneeId;
+
+    if (statusChanged && args.status === "done") {
+      await logActivity(ctx, {
+        workspaceId: board.workspaceId,
+        userId: user._id,
+        type: "TASK_COMPLETED",
+        entityId: args.id,
+        entityType: "task",
+        metadata: baseMeta,
+      });
+      await notifyUser(ctx, {
+        userId: task.createdBy,
+        actorId: user._id,
+        workspaceId: board.workspaceId,
+        type: "TASK_COMPLETED",
+        entityId: args.id,
+        entityType: "task",
+        metadata: baseMeta,
+      });
+    } else if (statusChanged) {
+      await logActivity(ctx, {
+        workspaceId: board.workspaceId,
+        userId: user._id,
+        type: "TASK_MOVED",
+        entityId: args.id,
+        entityType: "task",
+        metadata: { ...baseMeta, newStatus: args.status },
+      });
+    } else if (assigneeChanged) {
+      let assigneeName: string | null = null;
+      if (args.assigneeId) {
+        const u = await ctx.runQuery(components.betterAuth.adapter.findOne, {
+          model: "user",
+          where: [{ field: "_id", value: args.assigneeId }],
+        });
+        assigneeName = u
+          ? [u.name, u.surname].filter(Boolean).join(" ") || u.email || null
+          : null;
+      }
+      await logActivity(ctx, {
+        workspaceId: board.workspaceId,
+        userId: user._id,
+        type: "TASK_ASSIGNED",
+        entityId: args.id,
+        entityType: "task",
+        metadata: { ...baseMeta, assigneeName },
+      });
+      if (args.assigneeId) {
+        await notifyUser(ctx, {
+          userId: args.assigneeId,
+          actorId: user._id,
+          workspaceId: board.workspaceId,
+          type: "TASK_ASSIGNED",
+          entityId: args.id,
+          entityType: "task",
+          metadata: baseMeta,
+        });
+      }
+    } else {
+      await logActivity(ctx, {
+        workspaceId: board.workspaceId,
+        userId: user._id,
+        type: "TASK_EDITED",
+        entityId: args.id,
+        entityType: "task",
+        metadata: baseMeta,
+      });
+    }
   },
 });
 
@@ -126,6 +226,15 @@ export const remove = mutation({
     await ensureMember(ctx, board.workspaceId, user._id);
 
     await ctx.db.delete(args.id);
+
+    await logActivity(ctx, {
+      workspaceId: board.workspaceId,
+      userId: user._id,
+      type: "TASK_DELETED",
+      entityId: args.id,
+      entityType: "task",
+      metadata: { taskTitle: task.title, boardName: board.name },
+    });
   },
 });
 

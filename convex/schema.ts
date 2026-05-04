@@ -84,6 +84,27 @@ export default defineSchema({
   })
     .index("by_workspace", ["workspaceId"])
     .index("by_user", ["userId"]),
+  notifications: defineTable({
+    userId: v.string(),
+    workspaceId: v.id("workspaces"),
+    type: v.union(
+      v.literal("TASK_ASSIGNED"),
+      v.literal("TASK_COMPLETED"),
+      v.literal("TASK_COMMENTED"),
+      v.literal("MEMBER_ADDED"),
+    ),
+    actorId: v.string(),
+    entityId: v.string(),
+    entityType: v.union(
+      v.literal("workspace"),
+      v.literal("task"),
+      v.literal("comment"),
+    ),
+    metadata: v.optional(v.any()),
+    read: v.boolean(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_read", ["userId", "read"]),
   attachments: defineTable({
     taskId: v.id("tasks"),
     uploadedBy: v.string(),

@@ -2,6 +2,8 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { authComponent } from "./betterAuth/auth";
 import { components } from "./_generated/api";
+import { logActivity } from "./activity";
+import { notifyUser } from "./notifications";
 
 const TEMPLATE_BOARD_NAMES: Record<string, string> = {
   kanban: "Tablica Kanban",
@@ -44,10 +46,19 @@ export const create = mutation({
     });
 
     if (args.template) {
-      await ctx.db.insert("boards", {
+      const boardName = TEMPLATE_BOARD_NAMES[args.template];
+      const boardId = await ctx.db.insert("boards", {
         workspaceId,
-        name: TEMPLATE_BOARD_NAMES[args.template],
+        name: boardName,
         createdBy: user._id,
+      });
+      await logActivity(ctx, {
+        workspaceId,
+        userId: user._id,
+        type: "BOARD_CREATED",
+        entityId: boardId,
+        entityType: "board",
+        metadata: { boardName },
       });
     }
 
@@ -132,6 +143,17 @@ export const addMember = mutation({
       workspaceId: args.workspaceId,
       userId: targetUser._id,
       role: args.role ?? "member",
+    });
+
+    const workspace = await ctx.db.get(args.workspaceId);
+    await notifyUser(ctx, {
+      userId: targetUser._id,
+      actorId: user._id,
+      workspaceId: args.workspaceId,
+      type: "MEMBER_ADDED",
+      entityId: args.workspaceId,
+      entityType: "workspace",
+      metadata: { workspaceName: workspace?.name ?? "" },
     });
   },
 });

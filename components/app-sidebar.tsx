@@ -34,6 +34,8 @@ import { Button } from "@/components/ui/button"
 import { NewProjectDialog } from "@/components/new-project-dialog"
 import { NotificationsPopover } from "@/components/notifications-popover"
 import Link from "next/link"
+import { useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
 import { cn } from "@/lib/utils"
 import { usePathname, useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
@@ -84,6 +86,7 @@ export function AppSidebar() {
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
   const router = useRouter()
+  const unreadCount = useQuery(api.notifications.unreadCount) ?? 0
   const handleSignOut = async () => {
     await authClient.signOut({
       fetchOptions: {
@@ -223,7 +226,9 @@ export function AppSidebar() {
                 aria-label="Notifications"
               >
                 <Bell className="size-4" />
-                <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-amber-500 ring-2 ring-sidebar" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-amber-500 ring-2 ring-sidebar" />
+                )}
               </Button>
             </NotificationsPopover>
           </div>
