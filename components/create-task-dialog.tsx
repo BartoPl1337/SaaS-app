@@ -28,6 +28,13 @@ const PRIORITY_OPTIONS: { id: Priority; label: string }[] = [
   { id: "urgent", label: "Krytyczny" },
 ]
 
+function parseDueDate(value: string): number | undefined {
+  if (!value) return undefined
+  const [y, m, d] = value.split("-").map(Number)
+  if (!y || !m || !d) return undefined
+  return new Date(y, m - 1, d).getTime()
+}
+
 interface CreateTaskDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -45,6 +52,7 @@ export function CreateTaskDialog({ open, onOpenChange, defaultWorkspaceId }: Cre
   const [assigneeId,  setAssigneeId]  = React.useState<string>("")
   const [status,      setStatus]      = React.useState<Status>("todo")
   const [priority,    setPriority]    = React.useState<Priority>("medium")
+  const [dueDate,     setDueDate]     = React.useState<string>("")
   const [submitting,  setSubmitting]  = React.useState(false)
 
   const boards = useQuery(
@@ -87,6 +95,7 @@ export function CreateTaskDialog({ open, onOpenChange, defaultWorkspaceId }: Cre
     setAssigneeId("")
     setStatus("todo")
     setPriority("medium")
+    setDueDate("")
   }
 
   function handleClose() {
@@ -108,6 +117,7 @@ export function CreateTaskDialog({ open, onOpenChange, defaultWorkspaceId }: Cre
         assigneeId: assigneeId || undefined,
         status,
         priority,
+        dueDate: parseDueDate(dueDate),
       })
       toast.success("Zadanie utworzone")
       handleClose()
@@ -198,6 +208,15 @@ export function CreateTaskDialog({ open, onOpenChange, defaultWorkspaceId }: Cre
                     <option key={o.id} value={o.id}>{o.label}</option>
                   ))}
                 </Select>
+                <div className="col-span-2 flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Termin (opcjonalnie)</label>
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="h-10 rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+                  />
+                </div>
               </div>
             </>
           )}

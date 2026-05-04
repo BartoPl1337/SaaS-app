@@ -55,6 +55,114 @@ export const create = mutation({
   },
 });
 
+export const update = mutation({
+  args: {
+    id: v.id("workspaces"),
+    name: v.optional(v.string()),
+    description: v.optional(v.string()),
+    color: v.optional(v.string()),
+    icon: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) throw new Error("Brak autoryzacji");
+
+    const ws = await ctx.db.get(args.id);
+    if (!ws) throw new Error("Projekt nie istnieje");
+
+    const membership = await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_workspace_user", (q) =>
+        q.eq("workspaceId", args.id).eq("userId", user._id),
+      )
+      .unique();
+    if (!membership || membership.role === "viewer") {
+      throw new Error("Brak uprawnień do edycji");
+    }
+
+    const patch: Record<string, unknown> = {};
+    if (args.name !== undefined)        patch.name = args.name;
+    if (args.description !== undefined) patch.description = args.description;
+    if (args.color !== undefined)       patch.color = args.color;
+    if (args.icon !== undefined)        patch.icon = args.icon;
+
+    await ctx.db.patch(args.id, patch);
+  },
+});
+
+export const addMember = mutation({
+  args: {
+    workspaceId: v.id("workspaces"),
+    email: v.string(),
+    role: v.optional(v.union(v.literal("member"), v.literal("viewer"))),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) throw new Error("Brak autoryzacji");
+
+    const myMembership = await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_workspace_user", (q) =>
+        q.eq("workspaceId", args.workspaceId).eq("userId", user._id),
+      )
+      .unique();
+    if (!myMembership) throw new Error("Brak dostępu do projektu");
+    if (myMembership.role !== "owner") {
+      throw new Error("Tylko właściciel może dodawać członków");
+    }
+
+    const email = args.email.trim().toLowerCase();
+    if (!email) throw new Error("Podaj adres email");
+
+    const targetUser = await ctx.runQuery(components.betterAuth.adapter.findOne, {
+      model: "user",
+      where: [{ field: "email", value: email }],
+    });
+    if (!targetUser) throw new Error("Użytkownik o tym emailu nie istnieje");
+
+    const existing = await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_workspace_user", (q) =>
+        q.eq("workspaceId", args.workspaceId).eq("userId", targetUser._id),
+      )
+      .unique();
+    if (existing) throw new Error("Ten użytkownik jest już członkiem");
+
+    await ctx.db.insert("workspaceMembers", {
+      workspaceId: args.workspaceId,
+      userId: targetUser._id,
+      role: args.role ?? "member",
+    });
+  },
+});
+
+export const removeMember = mutation({
+  args: { membershipId: v.id("workspaceMembers") },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) throw new Error("Brak autoryzacji");
+
+    const target = await ctx.db.get(args.membershipId);
+    if (!target) return;
+
+    const myMembership = await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_workspace_user", (q) =>
+        q.eq("workspaceId", target.workspaceId).eq("userId", user._id),
+      )
+      .unique();
+    if (!myMembership) throw new Error("Brak dostępu do projektu");
+    if (myMembership.role !== "owner") {
+      throw new Error("Tylko właściciel może usuwać członków");
+    }
+    if (target.role === "owner") {
+      throw new Error("Nie można usunąć właściciela projektu");
+    }
+
+    await ctx.db.delete(args.membershipId);
+  },
+});
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
@@ -89,7 +197,9 @@ export const get = query({
 
     if (!membership) return null;
 
-    return ctx.db.get(args.id);
+    const ws = await ctx.db.get(args.id);
+    if (!ws) return null;
+    return { ...ws, viewerRole: membership.role };
   },
 });
 

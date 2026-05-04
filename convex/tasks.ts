@@ -129,6 +129,45 @@ export const remove = mutation({
   },
 });
 
+export const listMine = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) return [];
+
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_assignee", (q) => q.eq("assigneeId", user._id))
+      .collect();
+
+    const boardIds = Array.from(new Set(tasks.map((t) => t.boardId)));
+    const boards = await Promise.all(boardIds.map((id) => ctx.db.get(id)));
+    const boardMap = new Map(
+      boards.filter((b): b is NonNullable<typeof b> => !!b).map((b) => [b._id, b]),
+    );
+
+    const workspaceIds = Array.from(
+      new Set(
+        boards
+          .filter((b): b is NonNullable<typeof b> => !!b)
+          .map((b) => b.workspaceId),
+      ),
+    );
+    const workspaces = await Promise.all(workspaceIds.map((id) => ctx.db.get(id)));
+    const workspaceMap = new Map(
+      workspaces
+        .filter((w): w is NonNullable<typeof w> => !!w)
+        .map((w) => [w._id, w]),
+    );
+
+    return tasks.map((t) => {
+      const board = boardMap.get(t.boardId) ?? null;
+      const workspace = board ? workspaceMap.get(board.workspaceId) ?? null : null;
+      return { ...t, board, workspace };
+    });
+  },
+});
+
 export const listByProject = query({
   args: { workspaceId: v.id("workspaces") },
   handler: async (ctx, args) => {

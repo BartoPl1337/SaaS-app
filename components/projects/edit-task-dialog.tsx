@@ -35,7 +35,24 @@ interface TaskInput {
   assigneeId?: string
   status: Status
   priority: Priority
+  dueDate?: number
   board: { _id: Id<"boards">; workspaceId: Id<"workspaces">; name: string } | null
+}
+
+function dueToInput(ms?: number): string {
+  if (!ms) return ""
+  const d = new Date(ms)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, "0")
+  const dd = String(d.getDate()).padStart(2, "0")
+  return `${yyyy}-${mm}-${dd}`
+}
+
+function parseDueDate(value: string): number | null {
+  if (!value) return null
+  const [y, m, d] = value.split("-").map(Number)
+  if (!y || !m || !d) return null
+  return new Date(y, m - 1, d).getTime()
 }
 
 interface EditTaskDialogProps {
@@ -53,6 +70,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
   const [assigneeId,  setAssigneeId]  = React.useState<string>("")
   const [status,      setStatus]      = React.useState<Status>("todo")
   const [priority,    setPriority]    = React.useState<Priority>("medium")
+  const [dueDate,     setDueDate]     = React.useState<string>("")
   const [submitting,  setSubmitting]  = React.useState(false)
   const [deleting,    setDeleting]    = React.useState(false)
 
@@ -68,6 +86,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
     setAssigneeId(task.assigneeId ?? "")
     setStatus(task.status)
     setPriority(task.priority)
+    setDueDate(dueToInput(task.dueDate))
   }, [task])
 
   function handleClose() {
@@ -87,6 +106,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
         assigneeId: assigneeId || null,
         status,
         priority,
+        dueDate: parseDueDate(dueDate),
       })
       toast.success("Zadanie zaktualizowane")
       handleClose()
@@ -175,6 +195,15 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                 <option key={o.id} value={o.id}>{o.label}</option>
               ))}
             </Select>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Termin</label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="h-10 rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+              />
+            </div>
           </div>
         </div>
 

@@ -3,7 +3,7 @@
 import { use, useState } from "react"
 import Link from "next/link"
 import { useQuery } from "convex/react"
-import { ArrowLeft, Kanban, Plus, Users } from "lucide-react"
+import { ArrowLeft, Kanban, Pencil, Plus, Users } from "lucide-react"
 
 import { api } from "@/convex/_generated/api"
 import type { Id } from "@/convex/_generated/dataModel"
@@ -13,6 +13,8 @@ import { getAccentGradient } from "@/components/new-project-dialog/colors"
 import { TaskRow } from "@/components/projects/task-row"
 import { EditTaskDialog } from "@/components/projects/edit-task-dialog"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
+import { EditProjectDialog } from "@/components/projects/edit-project-dialog"
+import { ProjectMembersSection } from "@/components/projects/project-members-section"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -30,6 +32,7 @@ export default function ProjectDetailPage({ params }: PageProps) {
   const [editingTaskId, setEditingTaskId] = useState<Id<"tasks"> | null>(null)
   const editingTask = tasks?.find((t) => t._id === editingTaskId) ?? null
   const [createTaskOpen, setCreateTaskOpen] = useState(false)
+  const [editProjectOpen, setEditProjectOpen] = useState(false)
   const hasBoards = !!boards && boards.length > 0
 
   if (project === undefined) {
@@ -58,6 +61,8 @@ export default function ProjectDetailPage({ params }: PageProps) {
   }
 
   const gradient = getAccentGradient(project.color)
+  const canEdit = project.viewerRole !== "viewer"
+  const isOwner = project.viewerRole === "owner"
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -72,9 +77,22 @@ export default function ProjectDetailPage({ params }: PageProps) {
           {project.icon ?? "🚀"}
         </div>
         <div className="flex flex-1 flex-col gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            {project.name}
-          </h1>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              {project.name}
+            </h1>
+            {canEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-muted-foreground hover:text-foreground"
+                onClick={() => setEditProjectOpen(true)}
+              >
+                <Pencil className="size-3.5" />
+                Edytuj
+              </Button>
+            )}
+          </div>
           {project.description && (
             <p className="text-sm leading-relaxed text-muted-foreground">
               {project.description}
@@ -119,6 +137,8 @@ export default function ProjectDetailPage({ params }: PageProps) {
           </div>
         )}
       </div>
+
+      <ProjectMembersSection workspaceId={projectId} isOwner={isOwner} />
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
@@ -165,6 +185,12 @@ export default function ProjectDetailPage({ params }: PageProps) {
         open={createTaskOpen}
         onOpenChange={setCreateTaskOpen}
         defaultWorkspaceId={projectId}
+      />
+
+      <EditProjectDialog
+        open={editProjectOpen}
+        onOpenChange={setEditProjectOpen}
+        project={project}
       />
     </div>
   )
