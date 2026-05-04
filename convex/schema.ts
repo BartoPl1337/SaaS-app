@@ -6,11 +6,15 @@ export default defineSchema({
   ...authSchema,
   workspaces: defineTable({
     name: v.string(),
-    ownerId: v.id("user"),
-  }),
+    description: v.optional(v.string()),
+    color: v.optional(v.string()),
+    icon: v.optional(v.string()),
+    ownerId: v.string(),
+  })
+    .index("by_owner", ["ownerId"]),
   workspaceMembers: defineTable({
     workspaceId: v.id("workspaces"),
-    userId: v.id("user"),
+    userId: v.string(),
     role: v.union(v.literal("owner"), v.literal("member"), v.literal("viewer")),
   })
     .index("by_workspace", ["workspaceId"])
@@ -19,13 +23,13 @@ export default defineSchema({
   boards: defineTable({
     workspaceId: v.id("workspaces"),
     name: v.string(),
-    createdBy: v.id("user"),
+    createdBy: v.string(),
   })
     .index("by_workspace", ["workspaceId"]),
   tasks: defineTable({
     boardId: v.id("boards"),
-    assigneeId: v.optional(v.id("user")),
-    createdBy: v.id("user"),
+    assigneeId: v.optional(v.string()),
+    createdBy: v.string(),
     title: v.string(),
     description: v.optional(v.string()),
     dueDate: v.optional(v.number()),
@@ -49,13 +53,13 @@ export default defineSchema({
     .index("by_assignee", ["assigneeId"]),
   comments: defineTable({
     taskId: v.id("tasks"),
-    userId: v.id("user"),
+    userId: v.string(),
     content: v.string(),
   })
     .index("by_task", ["taskId"]),
   activity: defineTable({
     workspaceId: v.id("workspaces"),
-    userId: v.id("user"),
+    userId: v.string(),
     type: v.union(
       v.literal("TASK_CREATED"),
       v.literal("TASK_COMMENTED"),
@@ -82,7 +86,7 @@ export default defineSchema({
     .index("by_user", ["userId"]),
   attachments: defineTable({
     taskId: v.id("tasks"),
-    uploadedBy: v.id("user"),
+    uploadedBy: v.string(),
     fileUrl: v.optional(v.string()),
   })
     .index("by_task", ["taskId"]),

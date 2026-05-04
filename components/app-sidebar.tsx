@@ -13,6 +13,7 @@ import {
   Plus,
   AlarmClockCheck,
   LogOutIcon,
+  Boxes,
 } from "lucide-react"
 
 import {
@@ -38,14 +39,18 @@ import { usePathname, useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import { authClient } from "@/lib/auth-client"
-import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog"
-import ProjectInformations from "./new-project-dialog/project-informations"
 
 const navItems = [
   {
     label: "Panel główny",
     icon: LayoutDashboard,
     href: "/",
+  },
+  {
+    label: "Projekty",
+    icon: Boxes,
+    href: "/projects",
+    badge: null,
   },
   {
     label: "Tablica",
@@ -145,7 +150,6 @@ export function AppSidebar() {
 
           {/* Bottom nav group */}
           <SidebarGroup className="mt-auto">
-            <ProjectInformations />
             <div className="group-data-[collapsible=icon]:hidden">
               <Button
                 variant="outline"

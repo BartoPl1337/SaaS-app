@@ -17,10 +17,15 @@ import { CreateTaskDialog } from "@/components/create-task-dialog"
 import { NotificationsPopover } from "@/components/notifications-popover"
 import { DropdownMenu, DropdownMenuGroup, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
+import type { Id } from "@/convex/_generated/dataModel"
 
 export function AppNavbar() {
   const [activeFilter, setActiveFilter] = useState<"recent" | "starred" | null>(null)
   const [createTaskOpen, setCreateTaskOpen] = useState<boolean>(false)
+  const pathname = usePathname()
+  const projectMatch = pathname.match(/^\/projects\/([^/]+)/)
+  const defaultWorkspaceId = projectMatch ? (projectMatch[1] as Id<"workspaces">) : undefined
 
   return (
     <>
@@ -164,7 +169,11 @@ export function AppNavbar() {
         </div >
       </header >
 
-      <CreateTaskDialog open={createTaskOpen} onOpenChange={setCreateTaskOpen} />
+      <CreateTaskDialog
+        open={createTaskOpen}
+        onOpenChange={setCreateTaskOpen}
+        defaultWorkspaceId={defaultWorkspaceId}
+      />
     </>
   )
 }

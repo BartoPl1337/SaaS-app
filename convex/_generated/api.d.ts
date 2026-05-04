@@ -9,6 +9,8 @@
  */
 
 import type * as http from "../http.js";
+import type * as projects from "../projects.js";
+import type * as tasks from "../tasks.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +20,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   http: typeof http;
+  projects: typeof projects;
+  tasks: typeof tasks;
 }>;
 
 /**

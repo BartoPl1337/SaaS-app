@@ -25,46 +25,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import Link from "next/link"
+import { useQuery } from "convex/react"
 import { TaskDetailDialog, type TaskDetail } from "@/components/task-detail-dialog"
+import { RecentBoardCard } from "@/components/boards/recent-board-card"
+import { api } from "@/convex/_generated/api"
 import { authClient } from "@/lib/auth-client"
-
-// ─── Data ────────────────────────────────────────────────────────────────────
-
-const BOARDS = [
-  {
-    id: 1,
-    name: "Redesign strony głównej",
-    description: "Nowy wygląd i UX dla landing page",
-    tasks: 12,
-    done: 8,
-    members: ["BB", "KN", "TW"],
-    color: "from-violet-500 to-indigo-600",
-    dot: "bg-violet-500",
-    updatedAt: "2 godz. temu",
-  },
-  {
-    id: 2,
-    name: "Sprint Q2 – Backend",
-    description: "API, migracje baz danych, optymalizacje",
-    tasks: 24,
-    done: 11,
-    members: ["BB", "MK"],
-    color: "from-sky-500 to-cyan-600",
-    dot: "bg-sky-500",
-    updatedAt: "wczoraj",
-  },
-  {
-    id: 3,
-    name: "Kampania marketingowa",
-    description: "Treści, grafiki, harmonogram publikacji",
-    tasks: 9,
-    done: 9,
-    members: ["JK", "AN", "TW"],
-    color: "from-emerald-500 to-teal-600",
-    dot: "bg-emerald-500",
-    updatedAt: "3 dni temu",
-  },
-]
 
 const ACTIVITY = [
   { id: 1, user: "BB", userColor: "from-violet-500 to-indigo-600", action: "ukończył zadanie", target: "Projekt API v2", time: "przed chwilą" },
@@ -224,6 +190,7 @@ export default function DashboardPage() {
   const activeTasks = TASKS.filter((t) => t.active).length
   const [selectedTask, setSelectedTask] = React.useState<TaskDetail | null>(null)
   const [dialogOpen, setDialogOpen] = React.useState(false)
+  const recentBoards = useQuery(api.projects.listRecentBoards, { limit: 3 })
 
   function openTask(id: number) {
     setSelectedTask(TASK_DETAILS[id] ?? null)
@@ -261,45 +228,29 @@ export default function DashboardPage() {
         <div className="col-span-3">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-foreground">Ostatnie tablice</h2>
-            <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground">
-              Zobacz wszystkie <ArrowRight className="size-3" />
+            <Button asChild variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground">
+              <Link href="/projects">Zobacz wszystkie <ArrowRight className="size-3" /></Link>
             </Button>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            {BOARDS.map((board) => {
-              const pct = Math.round((board.done / board.tasks) * 100)
-              return (
-                <div key={board.id} className="group flex cursor-pointer flex-col gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-xs transition-shadow hover:shadow-md">
-                  <div className="flex items-start gap-3">
-                    <div className={`mt-0.5 size-2.5 shrink-0 rounded-full ${board.dot}`} />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">{board.name}</p>
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">{board.description}</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                      <span>{board.done}/{board.tasks} zadań</span>
-                      <span>{pct}%</span>
-                    </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                      <div className={`h-full rounded-full bg-gradient-to-r ${board.color} transition-all`} style={{ width: `${pct}%` }} />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex -space-x-1.5">
-                      {board.members.map((m) => (
-                        <div key={m} className="flex size-5 items-center justify-center rounded-full bg-muted text-[9px] font-bold text-muted-foreground ring-2 ring-card">{m}</div>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      <Clock className="size-3" />{board.updatedAt}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          {recentBoards === undefined && (
+            <div className="grid grid-cols-3 gap-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-36 animate-pulse rounded-xl bg-muted/50" />
+              ))}
+            </div>
+          )}
+          {recentBoards && recentBoards.length === 0 && (
+            <div className="rounded-xl border border-dashed border-border/60 px-6 py-10 text-center text-sm text-muted-foreground">
+              Brak tablic. Utwórz projekt, aby zacząć.
+            </div>
+          )}
+          {recentBoards && recentBoards.length > 0 && (
+            <div className="grid grid-cols-3 gap-3">
+              {recentBoards.map((board) => (
+                <RecentBoardCard key={board._id} board={board} />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Activity — col 4, spans 2 rows */}
