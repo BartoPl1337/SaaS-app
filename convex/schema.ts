@@ -10,8 +10,32 @@ export default defineSchema({
     color: v.optional(v.string()),
     icon: v.optional(v.string()),
     ownerId: v.string(),
+    template: v.optional(
+      v.union(
+        v.literal("kanban"),
+        v.literal("scrum"),
+        v.literal("list"),
+        v.literal("blank"),
+      ),
+    ),
   })
-    .index("by_owner", ["ownerId"]),
+    .index("by_owner", ["ownerId"])
+    .searchIndex("search_name", { searchField: "name" }),
+  sprints: defineTable({
+    workspaceId: v.id("workspaces"),
+    name: v.string(),
+    goal: v.optional(v.string()),
+    status: v.union(
+      v.literal("planned"),
+      v.literal("active"),
+      v.literal("completed"),
+    ),
+    startDate: v.optional(v.number()),
+    endDate: v.optional(v.number()),
+    createdBy: v.string(),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_workspace_status", ["workspaceId", "status"]),
   workspaceMembers: defineTable({
     workspaceId: v.id("workspaces"),
     userId: v.string(),
@@ -28,6 +52,7 @@ export default defineSchema({
     .index("by_workspace", ["workspaceId"]),
   tasks: defineTable({
     boardId: v.id("boards"),
+    sprintId: v.optional(v.id("sprints")),
     assigneeId: v.optional(v.string()),
     createdBy: v.string(),
     title: v.string(),
@@ -50,7 +75,9 @@ export default defineSchema({
   })
     .index("by_board", ["boardId"])
     .index("by_board_status", ["boardId", "status"])
-    .index("by_assignee", ["assigneeId"]),
+    .index("by_sprint", ["sprintId"])
+    .index("by_assignee", ["assigneeId"])
+    .searchIndex("search_title", { searchField: "title" }),
   comments: defineTable({
     taskId: v.id("tasks"),
     userId: v.string(),
@@ -123,4 +150,16 @@ export default defineSchema({
   })
     .index("by_task", ["taskId"])
     .index("by_label", ["labelId"]),
+  notificationPrefs: defineTable({
+    userId: v.string(),
+    taskAssigned:  v.optional(v.boolean()),
+    taskComment:   v.optional(v.boolean()),
+    mentions:      v.optional(v.boolean()),
+    taskDue:       v.optional(v.boolean()),
+    taskCompleted: v.optional(v.boolean()),
+    statusChange:  v.optional(v.boolean()),
+    boardInvite:   v.optional(v.boolean()),
+    weeklyDigest:  v.optional(v.boolean()),
+  })
+    .index("by_user", ["userId"]),
 });

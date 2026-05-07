@@ -37,6 +37,7 @@ export const create = mutation({
       color: args.color,
       icon: args.icon,
       ownerId: user._id,
+      template: args.template,
     });
 
     await ctx.db.insert("workspaceMembers", {
@@ -60,6 +61,16 @@ export const create = mutation({
         entityType: "board",
         metadata: { boardName },
       });
+
+      if (args.template === "scrum") {
+        await ctx.db.insert("sprints", {
+          workspaceId,
+          name: "Sprint 1",
+          status: "active",
+          startDate: Date.now(),
+          createdBy: user._id,
+        });
+      }
     }
 
     return workspaceId;

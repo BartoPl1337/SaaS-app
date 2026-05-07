@@ -12,6 +12,51 @@ export type NotificationType =
 
 export type NotificationEntityType = "workspace" | "task" | "comment";
 
+export type PrefKey =
+  | "taskAssigned"
+  | "taskComment"
+  | "mentions"
+  | "taskDue"
+  | "taskCompleted"
+  | "statusChange"
+  | "boardInvite"
+  | "weeklyDigest";
+
+export const DEFAULT_PREFS: Record<PrefKey, boolean> = {
+  taskAssigned:  true,
+  taskComment:   true,
+  mentions:      true,
+  taskDue:       true,
+  taskCompleted: false,
+  statusChange:  false,
+  boardInvite:   true,
+  weeklyDigest:  false,
+};
+
+const TYPE_TO_PREF: Record<NotificationType, PrefKey> = {
+  TASK_ASSIGNED:  "taskAssigned",
+  TASK_COMPLETED: "taskCompleted",
+  TASK_COMMENTED: "taskComment",
+  MEMBER_ADDED:   "boardInvite",
+};
+
+async function isNotificationEnabled(
+  ctx: MutationCtx,
+  userId: string,
+  type: NotificationType,
+): Promise<boolean> {
+  const prefKey = TYPE_TO_PREF[type];
+  if (!prefKey) return true;
+
+  const prefs = await ctx.db
+    .query("notificationPrefs")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .unique();
+
+  const stored = prefs?.[prefKey];
+  return stored ?? DEFAULT_PREFS[prefKey];
+}
+
 export async function notifyUser(
   ctx: MutationCtx,
   args: {
@@ -25,6 +70,10 @@ export async function notifyUser(
   },
 ) {
   if (args.userId === args.actorId) return;
+
+  const enabled = await isNotificationEnabled(ctx, args.userId, args.type);
+  if (!enabled) return;
+
   await ctx.db.insert("notifications", {
     userId: args.userId,
     actorId: args.actorId,
@@ -36,6 +85,65 @@ export async function notifyUser(
     read: false,
   });
 }
+
+export const getPrefs = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) return DEFAULT_PREFS;
+
+    const prefs = await ctx.db
+      .query("notificationPrefs")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .unique();
+
+    const result: Record<PrefKey, boolean> = { ...DEFAULT_PREFS };
+    if (prefs) {
+      for (const k of Object.keys(DEFAULT_PREFS) as PrefKey[]) {
+        const v = prefs[k];
+        if (typeof v === "boolean") result[k] = v;
+      }
+    }
+    return result;
+  },
+});
+
+export const updatePrefs = mutation({
+  args: {
+    taskAssigned:  v.optional(v.boolean()),
+    taskComment:   v.optional(v.boolean()),
+    mentions:      v.optional(v.boolean()),
+    taskDue:       v.optional(v.boolean()),
+    taskCompleted: v.optional(v.boolean()),
+    statusChange:  v.optional(v.boolean()),
+    boardInvite:   v.optional(v.boolean()),
+    weeklyDigest:  v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) throw new Error("Brak autoryzacji");
+
+    const existing = await ctx.db
+      .query("notificationPrefs")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .unique();
+
+    const patch: Record<string, unknown> = {};
+    for (const k of Object.keys(args) as PrefKey[]) {
+      const val = args[k];
+      if (val !== undefined) patch[k] = val;
+    }
+
+    if (existing) {
+      await ctx.db.patch(existing._id, patch);
+    } else {
+      await ctx.db.insert("notificationPrefs", {
+        userId: user._id,
+        ...patch,
+      });
+    }
+  },
+});
 
 export const list = query({
   args: { limit: v.optional(v.number()) },

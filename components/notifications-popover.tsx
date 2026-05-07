@@ -11,6 +11,8 @@ import {
   Users,
 } from "lucide-react"
 
+import { toast } from "sonner"
+
 import { api } from "@/convex/_generated/api"
 import type { Id } from "@/convex/_generated/dataModel"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -135,7 +137,20 @@ export function NotificationsPopover({
   const visible = tab === "unread" ? list.filter((n) => !n.read) : list
 
   function handleClick(n: NotificationRecord) {
-    if (!n.read) markRead({ id: n._id })
+    if (!n.read) {
+      markRead({ id: n._id }).catch((err) => {
+        toast.error(err instanceof Error ? err.message : "Nie udało się oznaczyć powiadomienia")
+      })
+    }
+  }
+
+  async function handleMarkAllRead() {
+    try {
+      await markAllRead()
+      toast.success("Wszystkie powiadomienia oznaczone jako przeczytane")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Nie udało się oznaczyć powiadomień")
+    }
   }
 
   return (
@@ -155,7 +170,7 @@ export function NotificationsPopover({
           </div>
           {unreadCount > 0 && (
             <button
-              onClick={() => markAllRead()}
+              onClick={handleMarkAllRead}
               className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               <Check className="size-3" />

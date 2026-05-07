@@ -9,7 +9,7 @@ export function SectionTitle({ title, description }: { title: string; descriptio
   )
 }
 
-export function FieldRow({ label, description, children }: { label: string; description?: string; children: React.ReactNode }) {
+export function FieldRow({ label, description, children }: { label: React.ReactNode; description?: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-8 py-4">
       <div className="min-w-0 flex-1">

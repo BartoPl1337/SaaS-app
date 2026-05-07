@@ -14,6 +14,7 @@ import {
   Check,
 } from "lucide-react"
 import { useMutation, useQuery } from "convex/react"
+import { toast } from "sonner"
 
 import { api } from "@/convex/_generated/api"
 import type { Id } from "@/convex/_generated/dataModel"
@@ -245,11 +246,15 @@ export default function MyTasksPage() {
 
   async function handleToggle(task: BackendTask) {
     setTogglingId(task._id)
+    const markingDone = task.status !== "done"
     try {
       await updateTask({
         id: task._id,
-        status: task.status === "done" ? "todo" : "done",
+        status: markingDone ? "done" : "todo",
       })
+      toast.success(markingDone ? "Zadanie ukończone" : "Zadanie odznaczone")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Nie udało się zaktualizować zadania")
     } finally {
       setTogglingId(null)
     }

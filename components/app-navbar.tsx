@@ -1,9 +1,11 @@
 "use client"
 
-import { Search, Bell, HelpCircle, Clock, Bookmark, Plus, CommandIcon, LogOutIcon, User, Shield, Plug2 } from "lucide-react"
+import { Bell, HelpCircle, Clock, Bookmark, Plus, CommandIcon, LogOutIcon, User, Shield, Plug2 } from "lucide-react"
+import { useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
+import { GlobalSearch } from "@/components/global-search"
 import { Kbd, KbdGroup } from "@/components/ui/kbd"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useState } from "react"
@@ -26,6 +28,7 @@ export function AppNavbar() {
   const pathname = usePathname()
   const projectMatch = pathname.match(/^\/projects\/([^/]+)/)
   const defaultWorkspaceId = projectMatch ? (projectMatch[1] as Id<"workspaces">) : undefined
+  const unreadCount = useQuery(api.notifications.unreadCount) ?? 0
 
   return (
     <>
@@ -38,13 +41,7 @@ export function AppNavbar() {
         <div className="flex flex-1 items-center">
 
           {/* Search */}
-          <div className="relative flex max-w-xs flex-1 items-center">
-            <Search className="pointer-events-none absolute left-2.5 size-3.5 text-muted-foreground/60" />
-            <Input
-              placeholder="Szukaj..."
-              className="h-8 w-full rounded-lg border-border/50 bg-muted/40 pl-8 text-sm placeholder:text-muted-foreground/50 focus-visible:bg-background focus-visible:ring-1"
-            />
-          </div>
+          <GlobalSearch />
 
           <Separator orientation="vertical" className="ml-2" />
 
@@ -82,7 +79,9 @@ export function AppNavbar() {
               aria-label="Powiadomienia"
             >
               <Bell className="size-4" />
-              <span className="absolute top-1 right-1 size-1.5 rounded-full bg-amber-500 ring-1 ring-background" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 size-1.5 rounded-full bg-amber-500 ring-1 ring-background" />
+              )}
             </Button>
           </NotificationsPopover>
 

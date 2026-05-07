@@ -42,7 +42,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu"
 import { authClient } from "@/lib/auth-client"
 
-const navItems = [
+const navItems: {
+  label: string
+  icon: typeof LayoutDashboard
+  href: string
+  badge?: string | null
+  badgeKey?: "myTasksActive"
+}[] = [
   {
     label: "Panel główny",
     icon: LayoutDashboard,
@@ -64,7 +70,7 @@ const navItems = [
     label: "Moje zadania",
     icon: CheckSquare,
     href: "/tasks",
-    badge: "5",
+    badgeKey: "myTasksActive",
   },
   {
     label: "Aktywność",
@@ -87,6 +93,7 @@ export function AppSidebar() {
   const isCollapsed = state === "collapsed"
   const router = useRouter()
   const unreadCount = useQuery(api.notifications.unreadCount) ?? 0
+  const myTasksActive = useQuery(api.tasks.countMineActive) ?? 0
   const handleSignOut = async () => {
     await authClient.signOut({
       fetchOptions: {
@@ -127,26 +134,32 @@ export function AppSidebar() {
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
-                {navItems.map((item) => (
-                  <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton
-                      tooltip={item.label}
-                      size="default"
-                      className={cn("relative h-9 rounded-lg transition-all duration-150", pathname === item.href ? "bg-primary/20" : "")}
-                      asChild
-                    >
-                      <Link href={item.href}>
-                        <item.icon />
-                        <span>{item.label}</span>
-                        {item.badge && !isCollapsed && (
-                          <SidebarMenuBadge className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-sidebar-primary/10 px-1.5 text-[10px] font-semibold text-sidebar-primary">
-                            {item.badge}
-                          </SidebarMenuBadge>
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {navItems.map((item) => {
+                  const badge =
+                    item.badgeKey === "myTasksActive"
+                      ? myTasksActive > 0 ? String(myTasksActive) : null
+                      : item.badge ?? null
+                  return (
+                    <SidebarMenuItem key={item.label}>
+                      <SidebarMenuButton
+                        tooltip={item.label}
+                        size="default"
+                        className={cn("relative h-9 rounded-lg transition-all duration-150", pathname === item.href ? "bg-primary/20" : "")}
+                        asChild
+                      >
+                        <Link href={item.href}>
+                          <item.icon />
+                          <span>{item.label}</span>
+                          {badge && !isCollapsed && (
+                            <SidebarMenuBadge className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-sidebar-primary/10 px-1.5 text-[10px] font-semibold text-sidebar-primary">
+                              {badge}
+                            </SidebarMenuBadge>
+                          )}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

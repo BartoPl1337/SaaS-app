@@ -211,6 +211,97 @@ export const update = mutation({
   },
 });
 
+export const moveToStatus = mutation({
+  args: {
+    id: v.id("tasks"),
+    status: STATUS,
+    order: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) throw new Error("Brak autoryzacji");
+
+    const task = await ctx.db.get(args.id);
+    if (!task) throw new Error("Zadanie nie istnieje");
+
+    const board = await ctx.db.get(task.boardId);
+    if (!board) throw new Error("Tablica nie istnieje");
+
+    await ensureMember(ctx, board.workspaceId, user._id);
+
+    const statusChanged = task.status !== args.status;
+
+    await ctx.db.patch(args.id, {
+      status: args.status,
+      order: args.order,
+      updatedAt: Date.now(),
+    });
+
+    const baseMeta = { taskTitle: task.title, boardName: board.name };
+
+    if (statusChanged && args.status === "done") {
+      await logActivity(ctx, {
+        workspaceId: board.workspaceId,
+        userId: user._id,
+        type: "TASK_COMPLETED",
+        entityId: args.id,
+        entityType: "task",
+        metadata: baseMeta,
+      });
+      await notifyUser(ctx, {
+        userId: task.createdBy,
+        actorId: user._id,
+        workspaceId: board.workspaceId,
+        type: "TASK_COMPLETED",
+        entityId: args.id,
+        entityType: "task",
+        metadata: baseMeta,
+      });
+    } else if (statusChanged) {
+      await logActivity(ctx, {
+        workspaceId: board.workspaceId,
+        userId: user._id,
+        type: "TASK_MOVED",
+        entityId: args.id,
+        entityType: "task",
+        metadata: { ...baseMeta, newStatus: args.status },
+      });
+    }
+  },
+});
+
+export const moveToSprint = mutation({
+  args: {
+    id: v.id("tasks"),
+    sprintId: v.union(v.id("sprints"), v.null()),
+  },
+  handler: async (ctx, args) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) throw new Error("Brak autoryzacji");
+
+    const task = await ctx.db.get(args.id);
+    if (!task) throw new Error("Zadanie nie istnieje");
+
+    const board = await ctx.db.get(task.boardId);
+    if (!board) throw new Error("Tablica nie istnieje");
+
+    await ensureMember(ctx, board.workspaceId, user._id);
+
+    if (args.sprintId) {
+      const sprint = await ctx.db.get(args.sprintId);
+      if (!sprint) throw new Error("Sprint nie istnieje");
+      if (sprint.workspaceId !== board.workspaceId) {
+        throw new Error("Sprint nie należy do tego projektu");
+      }
+    }
+
+    await ctx.db.patch(args.id, {
+      sprintId: args.sprintId ?? undefined,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 export const remove = mutation({
   args: { id: v.id("tasks") },
   handler: async (ctx, args) => {
@@ -235,6 +326,21 @@ export const remove = mutation({
       entityType: "task",
       metadata: { taskTitle: task.title, boardName: board.name },
     });
+  },
+});
+
+export const countMineActive = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await authComponent.getAuthUser(ctx);
+    if (!user) return 0;
+
+    const tasks = await ctx.db
+      .query("tasks")
+      .withIndex("by_assignee", (q) => q.eq("assigneeId", user._id))
+      .collect();
+
+    return tasks.filter((t) => t.status !== "done").length;
   },
 });
 

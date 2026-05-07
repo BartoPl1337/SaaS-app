@@ -3,18 +3,22 @@
 import { use, useState } from "react"
 import Link from "next/link"
 import { useQuery } from "convex/react"
-import { ArrowLeft, Kanban, Pencil, Plus, Users } from "lucide-react"
+import type { FunctionReturnType } from "convex/server"
+import { ArrowLeft, Kanban, Pencil, Users } from "lucide-react"
 
 import { api } from "@/convex/_generated/api"
 import type { Id } from "@/convex/_generated/dataModel"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { getAccentGradient } from "@/components/new-project-dialog/colors"
-import { TaskRow } from "@/components/projects/task-row"
 import { EditTaskDialog } from "@/components/projects/edit-task-dialog"
 import { CreateTaskDialog } from "@/components/create-task-dialog"
 import { EditProjectDialog } from "@/components/projects/edit-project-dialog"
 import { ProjectMembersSection } from "@/components/projects/project-members-section"
+import { KanbanView } from "@/components/projects/views/kanban-view"
+import { ScrumView } from "@/components/projects/views/scrum-view"
+import { ListView } from "@/components/projects/views/list-view"
+import { BlankView } from "@/components/projects/views/blank-view"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -140,40 +144,18 @@ export default function ProjectDetailPage({ params }: PageProps) {
 
       <ProjectMembersSection workspaceId={projectId} isOwner={isOwner} />
 
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-foreground">Zadania</h2>
-          <Button
-            size="sm"
-            className="gap-1.5"
-            onClick={() => setCreateTaskOpen(true)}
-            disabled={!hasBoards}
-            title={!hasBoards ? "Najpierw potrzebna jest tablica" : undefined}
-          >
-            <Plus className="size-3.5" />
-            Utwórz zadanie
-          </Button>
-        </div>
-        {tasks === undefined && (
-          <div className="h-24 animate-pulse rounded-xl bg-muted/50" />
-        )}
-        {tasks && tasks.length === 0 && (
-          <div className="rounded-xl border border-dashed border-border/60 px-6 py-10 text-center text-sm text-muted-foreground">
-            {hasBoards ? "Brak zadań. Utwórz pierwsze." : "Najpierw potrzebna jest tablica."}
-          </div>
-        )}
-        {tasks && tasks.length > 0 && (
-          <div className="flex flex-col gap-2">
-            {tasks.map((t) => (
-              <TaskRow
-                key={t._id}
-                task={t}
-                onEdit={() => setEditingTaskId(t._id)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {tasks === undefined ? (
+        <div className="h-40 animate-pulse rounded-xl bg-muted/50" />
+      ) : (
+        renderView({
+          template: project.template,
+          workspaceId: projectId,
+          tasks,
+          hasBoards,
+          onEditTask: setEditingTaskId,
+          onCreateTask: () => setCreateTaskOpen(true),
+        })
+      )}
 
       <EditTaskDialog
         open={editingTaskId !== null}
@@ -193,5 +175,59 @@ export default function ProjectDetailPage({ params }: PageProps) {
         project={project}
       />
     </div>
+  )
+}
+
+type Template = "kanban" | "scrum" | "list" | "blank" | undefined
+type ProjectTasks = FunctionReturnType<typeof api.tasks.listByProject>
+
+interface RenderViewArgs {
+  template: Template
+  workspaceId: Id<"workspaces">
+  tasks: ProjectTasks
+  hasBoards: boolean
+  onEditTask: (id: Id<"tasks">) => void
+  onCreateTask: () => void
+}
+
+function renderView({ template, workspaceId, tasks, hasBoards, onEditTask, onCreateTask }: RenderViewArgs) {
+  if (template === "kanban") {
+    return (
+      <KanbanView
+        tasks={tasks}
+        onEditTask={onEditTask}
+        onCreateTask={onCreateTask}
+        hasBoards={hasBoards}
+      />
+    )
+  }
+  if (template === "scrum") {
+    return (
+      <ScrumView
+        workspaceId={workspaceId}
+        tasks={tasks}
+        onEditTask={onEditTask}
+        onCreateTask={onCreateTask}
+        hasBoards={hasBoards}
+      />
+    )
+  }
+  if (template === "blank") {
+    return (
+      <BlankView
+        tasks={tasks}
+        onEditTask={onEditTask}
+        onCreateTask={onCreateTask}
+        hasBoards={hasBoards}
+      />
+    )
+  }
+  return (
+    <ListView
+      tasks={tasks}
+      onEditTask={onEditTask}
+      onCreateTask={onCreateTask}
+      hasBoards={hasBoards}
+    />
   )
 }

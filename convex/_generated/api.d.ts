@@ -12,6 +12,8 @@ import type * as activity from "../activity.js";
 import type * as http from "../http.js";
 import type * as notifications from "../notifications.js";
 import type * as projects from "../projects.js";
+import type * as search from "../search.js";
+import type * as sprints from "../sprints.js";
 import type * as tasks from "../tasks.js";
 
 import type {
@@ -25,6 +27,8 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   notifications: typeof notifications;
   projects: typeof projects;
+  search: typeof search;
+  sprints: typeof sprints;
   tasks: typeof tasks;
 }>;
 
